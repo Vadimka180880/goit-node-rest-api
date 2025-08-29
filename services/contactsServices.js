@@ -6,21 +6,20 @@ import { randomUUID } from "crypto";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// шлях до JSON-файлу
 const contactsPath = path.join(__dirname, "../db/contacts.json");
 
-// Прочитати всі контакти
+// ==== базові функції ====
 export async function listContacts() {
   const data = await fs.readFile(contactsPath, "utf-8");
   return JSON.parse(data);
 }
 
-// Отримати контакт за ID
 export async function getContactById(contactId) {
   const contacts = await listContacts();
   return contacts.find((c) => c.id === contactId) || null;
 }
 
-// Додати контакт (очікує об'єкт { name, email, phone })
 export async function addContact(data) {
   const { name, email, phone } = data;
   const contacts = await listContacts();
@@ -30,7 +29,6 @@ export async function addContact(data) {
   return newContact;
 }
 
-// Оновити контакт за ID (мерджить поля з data)
 export async function updateContactById(contactId, data) {
   const contacts = await listContacts();
   const index = contacts.findIndex((c) => c.id === contactId);
@@ -41,7 +39,6 @@ export async function updateContactById(contactId, data) {
   return contacts[index];
 }
 
-// Видалити контакт за ID
 export async function removeContactById(contactId) {
   const contacts = await listContacts();
   const index = contacts.findIndex((c) => c.id === contactId);
@@ -52,11 +49,17 @@ export async function removeContactById(contactId) {
   return removed;
 }
 
+export const updateContact = updateContactById;
+export const removeContact = removeContactById;
+
 const contactsService = {
   listContacts,
   getContactById,
   addContact,
   updateContactById,
   removeContactById,
+  updateContact,  
+  removeContact,
 };
+
 export default contactsService;
