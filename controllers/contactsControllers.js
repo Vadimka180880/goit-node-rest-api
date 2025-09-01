@@ -1,5 +1,5 @@
 import contactsService from "../services/contactsServices.js";
-import { addContactSchema, updateContactSchema } from "../schemas/contactsSchemas.js";
+import { addContactSchema, updateContactSchema, updateFavoriteSchema } from "../schemas/contactsSchemas.js";
 
 // GET /api/contacts
 export const getAllContacts = async (req, res, next) => {
@@ -66,10 +66,31 @@ export const deleteContact = async (req, res, next) => {
   }
 };
 
+export const updateFavorite = async (req, res, next) => {
+  try {
+    const { contactId } = req.params;
+    
+    if (!Object.prototype.hasOwnProperty.call(req.body, "favorite")) {
+      return res.status(400).json({ message: "Missing field favorite" });
+    }
+
+    const { error } = updateFavoriteSchema.validate(req.body);
+    if (error) return res.status(400).json({ message: error.message });
+
+    const updated = await contactsService.updateStatusContact(contactId, req.body);
+    if (!updated) return res.status(404).json({ message: "Not found" });
+
+    res.status(200).json(updated);
+  } catch (err) {
+    next(err);
+  }
+};
+
 export default {
   getAllContacts,
   getOneContact,
   createContact,
   updateContact,
   deleteContact,
+  updateFavorite,
 };
