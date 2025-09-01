@@ -1,54 +1,51 @@
-import fs from "fs/promises";
-import path from "path";
-import { fileURLToPath } from "url";
-import { randomUUID } from "crypto";
+import Contact from "../models/Contact.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// шлях до JSON-файлу
-const contactsPath = path.join(__dirname, "../db/contacts.json");
-
-// ==== базові функції ====
+// GET /api/contacts
 export async function listContacts() {
-  const data = await fs.readFile(contactsPath, "utf-8");
-  return JSON.parse(data);
+  const rows = await Contact.findAll();
+  return rows.map(r => r.toJSON());
 }
 
+// GET /api/contacts/:id
 export async function getContactById(contactId) {
-  const contacts = await listContacts();
-  return contacts.find((c) => c.id === contactId) || null;
+  const row = await Contact.findByPk(contactId);
+  return row ? row.toJSON() : null;
 }
 
+// POST /api/contacts
+// очікує body: { name, email, phone, favorite? }
 export async function addContact(data) {
-  const { name, email, phone } = data;
-  const contacts = await listContacts();
-  const newContact = { id: randomUUID(), name, email, phone };
-  contacts.push(newContact);
-  await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
-  return newContact;
+  const { name, email, phone, favorite } = data;
+  const created = await Contact.create({ name, email, phone, favorite });
+  return created.toJSON();
 }
 
+// PUT /api/contacts/:id
+// приймає будь-який піднабір полів (name|email|phone|favorite)
 export async function updateContactById(contactId, data) {
-  const contacts = await listContacts();
-  const index = contacts.findIndex((c) => c.id === contactId);
-  if (index === -1) return null;
-
-  contacts[index] = { ...contacts[index], ...data };
-  await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
-  return contacts[index];
+  const row = await Contact.findByPk(contactId);
+  if (!row) return null;
+  await row.update(data);
+  return row.toJSON();
 }
 
+// DELETE /api/contacts/:id
 export async function removeContactById(contactId) {
-  const contacts = await listContacts();
-  const index = contacts.findIndex((c) => c.id === contactId);
-  if (index === -1) return null;
-
-  const [removed] = contacts.splice(index, 1);
-  await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
-  return removed;
+  const row = await Contact.findByPk(contactId);
+  if (!row) return null;
+  const json = row.toJSON(); 
+  await row.destroy();
+  return json;
 }
 
+export async function updateStatusContact(contactId, body) {
+  const row = await Contact.findByPk(contactId);
+  if (!row) return null;
+  await row.update({ favorite: body.favorite });
+  return row.toJSON();
+}
+
+// аліаси під контролери/роутер
 export const updateContact = updateContactById;
 export const removeContact = removeContactById;
 
@@ -58,8 +55,9 @@ const contactsService = {
   addContact,
   updateContactById,
   removeContactById,
-  updateContact,  
+  updateContact,
   removeContact,
+  updateStatusContact,
 };
 
 export default contactsService;
