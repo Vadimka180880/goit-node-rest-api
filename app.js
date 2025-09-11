@@ -37,4 +37,4 @@ try {
   process.exit(1);
 }
 
-await sequelize.sync();
+await sequelize.sync({ alter: true });
