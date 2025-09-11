@@ -14,7 +14,7 @@ export const registerController = async (req, res, next) => {
 export const loginController = async (req, res, next) => {
     try {
         const result = await authService.loginUser(req.body);
-        if (!result) return next(HttpError(401, "Email or password is wrong"));
+        if (!result) return res.status(401).json({ message: "Email or password is wrong" });
         res.status(200).json(result);
     } catch (err) {
         next(err);
@@ -26,7 +26,8 @@ export default authControllers;
  
 export const currentController = async (req, res, next) => {
     try {
-        const { email, subscription } = req.user;
+    if (!req.user) return next(HttpError(401));
+    const { email, subscription } = req.user;
         res.status(200).json({ email, subscription });
     } catch (err) {
         next(err);
@@ -35,7 +36,9 @@ export const currentController = async (req, res, next) => {
 
 export const logoutController = async (req, res, next) => {
     try {
-        await authService.logoutUser(req.user.id);
+    if (!req.user) return next(HttpError(401));
+    const ok = await authService.logoutUser(req.user.id);
+    if (!ok) return next(HttpError(401));
         res.status(204).send();
     } catch (err) {
         next(err);
