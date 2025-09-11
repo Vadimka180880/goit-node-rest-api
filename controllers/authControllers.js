@@ -1,5 +1,6 @@
 import authService from "../services/authServices.js";
 import HttpError from "../helpers/HttpError.js";
+import { updateSubscriptionSchema } from "../schemas/authSchemas.js";
 
 export const registerController = async (req, res, next) => {
     try {
@@ -45,6 +46,17 @@ export const logoutController = async (req, res, next) => {
     }
 };
 
-// named exports already declared above and default aggregated export provided
+export const updateSubscriptionController = async (req, res, next) => {
+    try {
+        if (!req.user) return next(HttpError(401));
+        const { error } = updateSubscriptionSchema.validate(req.body);
+        if (error) return res.status(400).json({ message: error.message });
+        const updated = await authService.updateSubscription(req.user.id, req.body.subscription);
+        if (!updated) return next(HttpError(401));
+        res.status(200).json({ email: updated.email, subscription: updated.subscription });
+    } catch (err) {
+        next(err);
+    }
+};
 
 

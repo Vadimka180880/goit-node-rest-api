@@ -35,4 +35,11 @@ export const logoutUser = async (userId) => {
     return true;
 };
 
-export default { registerUser, loginUser, logoutUser };
+export const updateSubscription = async (userId, subscription) => {
+    const user = await User.findByPk(userId);
+    if (!user) return null;
+    await user.update({ subscription });
+    return user.toJSON();
+};
+
+export default { registerUser, loginUser, logoutUser, updateSubscription };

@@ -1,9 +1,20 @@
 import Contact from "../models/Contact.js";
 
 // GET /api/contacts
-export async function listContacts(ownerId) {
-  const rows = await Contact.findAll({ where: { owner: ownerId } });
-  return rows.map(r => r.toJSON());
+export async function listContacts(ownerId, options = {}) {
+  const { page = 1, limit = 20, favorite } = options;
+  const offset = (page - 1) * limit;
+  const where = { owner: ownerId };
+  if (typeof favorite === "boolean") where.favorite = favorite;
+
+  const { rows, count } = await Contact.findAndCountAll({ where, limit, offset, order: [["createdAt", "DESC"]] });
+  return {
+    page,
+    limit,
+    total: count,
+    totalPages: Math.ceil(count / limit) || 1,
+    items: rows.map(r => r.toJSON()),
+  };
 }
 
 // GET /api/contacts/:id
@@ -43,7 +54,6 @@ export async function updateStatusContact(ownerId, contactId, body) {
   return row.toJSON();
 }
 
-// аліаси під контролери/роутер
 export const updateContact = updateContactById;
 export const removeContact = removeContactById;
 

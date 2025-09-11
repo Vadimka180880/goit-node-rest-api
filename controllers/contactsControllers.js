@@ -4,7 +4,15 @@ import { addContactSchema, updateContactSchema, updateFavoriteSchema } from "../
 // GET /api/contacts
 export const getAllContacts = async (req, res, next) => {
   try {
-  const contacts = await contactsService.listContacts(req.user.id);
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const rawLimit = parseInt(req.query.limit, 10);
+    const limit = Math.min(Math.max(isNaN(rawLimit) ? 20 : rawLimit, 1), 100);
+    let favorite;
+    if (typeof req.query.favorite !== "undefined") {
+      const val = String(req.query.favorite).toLowerCase();
+      favorite = val === "true" || val === "1";
+    }
+    const contacts = await contactsService.listContacts(req.user.id, { page, limit, favorite });
     res.status(200).json(contacts);
   } catch (err) {
     next(err);
