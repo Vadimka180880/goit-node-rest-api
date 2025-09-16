@@ -1,6 +1,7 @@
 import User from "../db/User.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import gravatar from "gravatar";
 
 const { JWT_SECRET = "dev-secret", JWT_EXPIRES_IN = "1h" } = process.env;
 
@@ -12,8 +13,10 @@ export const registerUser = async ({ email, password }) => {
         throw err;
     }
     const hash = await bcrypt.hash(password, 10);
-    const user = await User.create({ email, password: hash });
-    return { email: user.email, subscription: user.subscription };
+    // Generate default avatar via Gravatar using user's email
+    const avatarURL = gravatar.url(email, { s: "250", d: "identicon" }, true);
+    const user = await User.create({ email, password: hash, avatarURL });
+    return { email: user.email, subscription: user.subscription, avatarURL: user.avatarURL };
 };
 
 export const loginUser = async ({ email, password }) => {

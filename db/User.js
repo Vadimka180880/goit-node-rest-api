@@ -27,6 +27,10 @@ const User = sequelize.define(
       type: DataTypes.STRING,
       defaultValue: null,
     },
+    avatarURL: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
   {
     tableName: "users",
@@ -34,6 +38,5 @@ const User = sequelize.define(
   }
 );
 
-User.sync({ alter: true });
 export default User;
 
