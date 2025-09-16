@@ -6,10 +6,8 @@ import { randomUUID } from "crypto";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// шлях до JSON-файлу
 const contactsPath = path.join(__dirname, "../db/contacts.json");
 
-// ==== базові функції ====
 export async function listContacts() {
   const data = await fs.readFile(contactsPath, "utf-8");
   return JSON.parse(data);
