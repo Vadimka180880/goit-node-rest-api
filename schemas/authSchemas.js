@@ -1,0 +1,22 @@
+import Joi from "joi";
+import { emailRegexp } from "../constants/auth-constants.js";
+
+export const registerSchema = Joi.object({
+  email: Joi.string().pattern(emailRegexp).required(),
+  password: Joi.string().min(6).required(),
+});
+
+export const loginSchema = Joi.object({
+  email: Joi.string().pattern(emailRegexp).required(),
+  password: Joi.string().min(6).required(),
+});
+
+export const updateSubscriptionSchema = Joi.object({
+  subscription: Joi.string().valid("starter", "pro", "business").required(),
+});
+
+export const resendVerifySchema = Joi.object({
+  email: Joi.string().pattern(emailRegexp).required(),
+});
+
+export default { registerSchema, loginSchema, updateSubscriptionSchema, resendVerifySchema };

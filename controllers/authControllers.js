@@ -1,6 +1,7 @@
 import authService from "../services/authServices.js";
 import HttpError from "../helpers/HttpError.js";
-import { updateSubscriptionSchema } from "../schemas/authSchemas.js";
+import { updateSubscriptionSchema, resendVerifySchema } from "../schemas/authSchemas.js";
+import { sendVerificationEmail } from "../services/emailService.js";
 import fs from "fs/promises";
 import path from "path";
 import sharp from "sharp";
@@ -22,6 +23,9 @@ export const loginController = async (req, res, next) => {
         if (!result) return res.status(401).json({ message: "Email or password is wrong" });
         res.status(200).json(result);
     } catch (err) {
+        if (err.status === 401 && err.message === "Email not verified") {
+            return res.status(401).json({ message: "Email not verified" });
+        }
         next(err);
     }
 };
@@ -86,6 +90,41 @@ export const updateAvatarController = async (req, res, next) => {
         await user.update({ avatarURL });
 
         res.status(200).json({ avatarURL });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const verifyEmailController = async (req, res, next) => {
+    try {
+        const { verificationToken } = req.params;
+        const user = await User.findOne({ where: { verificationToken } });
+        if (!user) return res.status(404).json({ message: "User not found" });
+        await user.update({ verify: true, verificationToken: null });
+        res.status(200).json({ message: "Verification successful" });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const resendVerifyController = async (req, res, next) => {
+    try {
+        const { error } = resendVerifySchema.validate(req.body);
+    if (error) return res.status(400).json({ message: "missing required field email" });
+        const { email } = req.body;
+        const user = await User.findOne({ where: { email } });
+        if (!user) return res.status(404).json({ message: "User not found" });
+        if (user.verify) return res.status(400).json({ message: "Verification has already been passed" });
+        // Ensure token exists; if absent, re-generate and save
+        let { verificationToken } = user;
+        if (!verificationToken) {
+            // lazy import nanoid to avoid circular deps
+            const { nanoid } = await import("nanoid");
+            verificationToken = nanoid();
+            await user.update({ verificationToken });
+        }
+        await sendVerificationEmail(email, verificationToken);
+        res.status(200).json({ message: "Verification email sent" });
     } catch (err) {
         next(err);
     }
